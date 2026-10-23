@@ -2,4 +2,5 @@
 game_server.exe
 *.exe
 *.log
+.ssh_host_key*
 .system_generated/
