@@ -1,0 +1,5 @@
+# .gitignore
+game_server.exe
+*.exe
+*.log
+.system_generated/
