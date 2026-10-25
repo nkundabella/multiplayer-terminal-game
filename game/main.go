@@ -582,7 +582,7 @@ func main() {
 		Addr:    ":" + port,
 		Handler: sshHandler,
 	}
-	server.SetOption(ssh.HostKeyFile(".ssh_host_key"))
+	server.SetOption(ssh.HostKeyFile("host_key"))
 
 	stop := make(chan os.Signal, 1)
 	signal.Notify(stop, os.Interrupt, syscall.SIGTERM)
