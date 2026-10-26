@@ -4,3 +4,5 @@ game_server.exe
 *.log
 .ssh_host_key*
 .system_generated/
+config.bat
+node_modules

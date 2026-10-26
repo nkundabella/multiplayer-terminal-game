@@ -17,10 +17,10 @@ import (
 )
 
 const port = "2222"
-const arenaWidth = 60
+const arenaWidth = 72
 
 // -----------------------------------------------------------------
-// 1. ASCII SPRITES & ANIMATION FRAMES
+// 1. MECHA CYBORG HIGH-DEF ASCII SPRITES (6 Lines High, 14 Chars Wide)
 // -----------------------------------------------------------------
 
 type FighterSprite struct {
@@ -32,71 +32,107 @@ type FighterSprite struct {
 	Super []string
 }
 
-// Player 1 (Facing Right)
+// Player 1 (CYBER-NINJA: Facing Right)
 var p1Sprites = FighterSprite{
 	Idle: []string{
-		"   O    ",
-		"  /|\\   ",
-		"  / \\   ",
+		"   ▄████▄   ",
+		"  █▒░▀█▀░▒█  ",
+		" ▓█████████▓ ",
+		" ░▒███████▒░ ",
+		"   ██   ██   ",
+		"  ▄██   ██▄  ",
 	},
 	Punch: []string{
-		"   O==👊 ",
-		"  /|    ",
-		"  / \\   ",
+		"   ▄████▄    ",
+		"  █▒░▀█▀░▒█  ",
+		" ▓█████████▓═╬►⚡",
+		" ░▒███████▒░ ",
+		"   ██   ██   ",
+		"  ▄██   ██▄  ",
 	},
 	Kick: []string{
-		"   O_   ",
-		"  /| \\_🦵",
-		"  /     ",
+		"    ▄████▄   ",
+		"   █▒░▀█▀░▒█ ",
+		"  ▓████████▓ ",
+		"  ░▒███████▒░",
+		"   ██  ▄████▓►💥",
+		"  ▄██        ",
 	},
 	Block: []string{
-		"   O|   ",
-		"  🛡️|   ",
-		"  / \\   ",
+		"   ▄████▄    ",
+		"  █▒░▀█▀░▒█  ",
+		" ▓█████████▓ ",
+		" ░▒███████▒░ ",
+		"  ███║█║███  ",
+		"  ▀██║█║██▀  ",
 	},
 	Hurt: []string{
-		"   X💥  ",
-		"  (>\\   ",
-		"  / \\   ",
+		" 💥 ▄████▄   ",
+		"   █>░▀█▀░<█ ",
+		"   ▓███████▓ ",
+		"   ░▒█████▒░ ",
+		"    ██  ██   ",
+		"   ▄██  ██▄  ",
 	},
 	Super: []string{
-		"  ⚡O/  ⚡",
-		"  🔥|==💥💥",
-		"  / \\   ",
+		" ⚡ ▄████▄  ⚡",
+		"   █▓░▀█▀░▓█ ",
+		" ▓█████████▓═╬►═════███⚡💥",
+		" ░▒███████▒░═╬►═════███⚡💥",
+		"   ██   ██   ",
+		"  ▄██   ██▄  ",
 	},
 }
 
-// Player 2 (Facing Left)
+// Player 2 (WAR-MECH: Facing Left)
 var p2Sprites = FighterSprite{
 	Idle: []string{
-		"    O   ",
-		"   /|\\  ",
-		"   / \\  ",
+		"   ▄████▄   ",
+		"  █▒░▀█▀░▒█  ",
+		" ▓█████████▓ ",
+		" ░▒███████▒░ ",
+		"   ██   ██   ",
+		"  ▄██   ██▄  ",
 	},
 	Punch: []string{
-		" 👊==O   ",
-		"    |\\  ",
-		"   / \\  ",
+		"    ▄████▄   ",
+		"   █▒░▀█▀░▒█ ",
+		"⚡◄╬═▓█████████▓",
+		"  ░▒███████▒░",
+		"    ██   ██  ",
+		"   ▄██   ██▄ ",
 	},
 	Kick: []string{
-		"   _O   ",
-		"🦵_/ |\\  ",
-		"     \\  ",
+		"   ▄████▄    ",
+		"  █▒░▀█▀░▒█  ",
+		"  ▓████████▓ ",
+		" ░▒███████▒░ ",
+		"💥◄▓████▄  ██ ",
+		"         ██▄ ",
 	},
 	Block: []string{
-		"   |O   ",
-		"   |🛡️  ",
-		"   / \\  ",
+		"    ▄████▄   ",
+		"   █▒░▀█▀░▒█ ",
+		"  ▓█████████▓",
+		"  ░▒███████▒░",
+		"   ███║█║███ ",
+		"   ▀██║█║██▀ ",
 	},
 	Hurt: []string{
-		"  💥X   ",
-		"   /<)  ",
-		"   / \\  ",
+		"   ▄████▄  💥",
+		"  █>░▀█▀░<█  ",
+		"  ▓███████▓  ",
+		"  ░▒█████▒░  ",
+		"    ██  ██   ",
+		"   ▄██  ██▄  ",
 	},
 	Super: []string{
-		"  ⚡\\O⚡ ",
-		"💥💥==|🔥 ",
-		"   / \\  ",
+		" ⚡ ▄████▄  ⚡",
+		"  █▓░▀█▀░▓█  ",
+		"💥⚡███═════◄╬═▓█████████▓",
+		"💥⚡███═════◄╬═░▒███████▒░",
+		"    ██   ██  ",
+		"   ▄██   ██▄ ",
 	},
 }
 
@@ -106,7 +142,7 @@ const logoBanner = `
    ██    █████   ██████  ██ ████ ██ ██ ██ ██  ██ ███████    ██    ██    ██ ██████  
    ██    ██      ██   ██ ██  ██  ██ ██ ██  ██ ██ ██   ██    ██    ██    ██ ██   ██ 
    ██    ███████ ██   ██ ██      ██ ██ ██   ████ ██   ██    ██     ██████  ██   ██ 
-                     ═══ CYBER COMBAT TERMINAL ARENA ═══
+                     ═══ MECHA CYBER COMBAT TERMINAL ARENA ═══
 `
 
 // -----------------------------------------------------------------
@@ -124,11 +160,7 @@ var (
 	meterBorder = lipgloss.NewStyle().
 			Border(lipgloss.DoubleBorder()).
 			BorderForeground(lipgloss.Color("#BD00FF")).
-			Padding(1, 2)
-
-	stageStyle = lipgloss.NewStyle().
-			Border(lipgloss.NormalBorder(), false, false, true, false).
-			BorderForeground(lipgloss.Color("#FFE600"))
+			Padding(0, 2)
 
 	alertStyle = lipgloss.NewStyle().
 			Bold(true).
@@ -160,11 +192,10 @@ type Fighter struct {
 	HP        int
 	MaxHP     int
 	Energy    int // 0 to 100 for Super
-	Pos       int // Horizontal position (0 to arenaWidth-10)
+	Pos       int // Horizontal position
 	State     ActionState
-	StateTime int // Ticks left in current state
+	StateTime int
 	Combo     int
-	Score     int
 	Wins      int
 }
 
@@ -194,12 +225,12 @@ var globalLobby = &Lobby{
 		RoundTime:    99,
 		FightStarted: false,
 		AnnounceText: "WAITING FOR CHALLENGER (NEED 2 FIGHTERS)...",
-		CombatLog:    []string{"⚡ Welcome to TERMINATOR: CYBER COMBAT!"},
+		CombatLog:    []string{"⚡ Welcome to TERMINATOR: MECHA COMBAT!"},
 	},
 }
 
 func init() {
-	// Game Engine 10Hz Tick Loop (every 100ms for punchy fighting mechanics)
+	// Game Engine 10Hz Tick Loop
 	go func() {
 		ticker := time.NewTicker(100 * time.Millisecond)
 		secondTick := 0
@@ -221,7 +252,6 @@ func (l *Lobby) gameTick(secondTick *int) {
 		}
 	}
 
-	// Update fighter state durations (animations auto-reset to idle)
 	if l.state.P1 != nil {
 		if l.state.P1.StateTime > 0 {
 			l.state.P1.StateTime--
@@ -259,18 +289,18 @@ func (l *Lobby) Join(name string) (int, chan CombatState) {
 			Name:   name,
 			HP:     100,
 			MaxHP:  100,
-			Pos:    10,
+			Pos:    6,
 			State:  StateIdle,
 			Energy: 20,
 		}
-		l.state.AnnounceText = fmt.Sprintf("🎮 %s ENTERED AS PLAYER 1! Waiting for P2...", name)
+		l.state.AnnounceText = fmt.Sprintf("🎮 %s JOINED AS P1 (CYBER-NINJA)! Waiting for P2...", name)
 	} else if l.state.P2 == nil {
 		l.state.P2 = &Fighter{
 			ID:     id,
 			Name:   name,
 			HP:     100,
 			MaxHP:  100,
-			Pos:    arenaWidth - 18,
+			Pos:    arenaWidth - 20,
 			State:  StateIdle,
 			Energy: 20,
 		}
@@ -279,7 +309,7 @@ func (l *Lobby) Join(name string) (int, chan CombatState) {
 		l.state.AnnounceText = fmt.Sprintf("🔥 ROUND %d: %s VS %s — FIGHT!", l.state.Round, l.state.P1.Name, l.state.P2.Name)
 	} else {
 		l.state.Spectators++
-		l.state.AnnounceText = fmt.Sprintf("👀 %s is now spectating!", name)
+		l.state.AnnounceText = fmt.Sprintf("👀 %s is spectating the battle!", name)
 	}
 
 	l.broadcastUnlocked()
@@ -320,7 +350,7 @@ func (l *Lobby) HandleInput(id int, key string) {
 	isP1 := l.state.P1.ID == id
 	isP2 := l.state.P2.ID == id
 	if !isP1 && !isP2 {
-		return // Spectator
+		return
 	}
 
 	attacker := l.state.P1
@@ -332,7 +362,6 @@ func (l *Lobby) HandleInput(id int, key string) {
 		dir = -1
 	}
 
-	// Don't take inputs if currently stunned/hurt
 	if attacker.State == StateHurt {
 		return
 	}
@@ -349,46 +378,45 @@ func (l *Lobby) HandleInput(id int, key string) {
 			attacker.Pos -= 2
 		}
 	case "right", "d":
-		// Prevent walking right through the other fighter
-		if (dir == 1 && attacker.Pos+8 < defender.Pos) || (dir == -1 && attacker.Pos < arenaWidth-10) {
+		if (dir == 1 && attacker.Pos+14 < defender.Pos) || (dir == -1 && attacker.Pos < arenaWidth-16) {
 			attacker.Pos += 2
-		} else if dir == -1 && attacker.Pos-8 > defender.Pos {
+		} else if dir == -1 && attacker.Pos-14 > defender.Pos {
 			attacker.Pos -= 2
 		}
 
-	// Fast Punch (J / 1)
+	// Cyber Jab / Punch (J / 1)
 	case "j", "1":
 		attacker.State = StatePunch
-		attacker.StateTime = 3 // 300ms
-		if dist <= 10 {
-			l.applyHit(attacker, defender, 8, 10, "PUNCH")
+		attacker.StateTime = 3
+		if dist <= 16 {
+			l.applyHit(attacker, defender, 8, 10, "CYBER JAB")
 		}
 
-	// Heavy Kick (K / 2)
+	// Plasma Kick (K / 2)
 	case "k", "2":
 		attacker.State = StateKick
-		attacker.StateTime = 4 // 400ms
-		if dist <= 12 {
-			l.applyHit(attacker, defender, 15, 15, "HEAVY KICK")
+		attacker.StateTime = 4
+		if dist <= 18 {
+			l.applyHit(attacker, defender, 15, 15, "PLASMA KICK")
 		}
 
-	// Block Guard (L / 3)
+	// Energy Barrier / Block (L / 3 / S)
 	case "l", "3", "s", "down":
 		attacker.State = StateBlock
 		attacker.StateTime = 4
 
-	// Super Combo Beam (Space / U / 4)
+	// Mega Railgun Super Beam (Space / U / 4)
 	case "space", "u", "4":
 		if attacker.Energy >= 100 {
 			attacker.State = StateSuper
 			attacker.StateTime = 7
 			attacker.Energy = 0
-			if dist <= 24 {
-				l.applyHit(attacker, defender, 35, 0, "💥 HYPER CYBER BEAM")
+			if dist <= 35 {
+				l.applyHit(attacker, defender, 35, 0, "💥 MEGA RAILGUN CANNON")
 			}
-			l.state.AnnounceText = fmt.Sprintf("⚡ %s FIRED A HYPER CYBER BEAM!", attacker.Name)
+			l.state.AnnounceText = fmt.Sprintf("⚡ %s FIRED THE MEGA RAILGUN CANNON!", attacker.Name)
 		} else {
-			l.state.AnnounceText = fmt.Sprintf("⚠️ %s: Energy not ready (%d/100)!", attacker.Name, attacker.Energy)
+			l.state.AnnounceText = fmt.Sprintf("⚠️ %s: Super Energy not ready (%d/100)!", attacker.Name, attacker.Energy)
 		}
 	}
 
@@ -405,8 +433,8 @@ func (l *Lobby) applyHit(att *Fighter, def *Fighter, dmg int, energyGain int, at
 		reducedDmg := dmg / 4
 		def.HP -= reducedDmg
 		att.Combo = 0
-		def.Energy += 5
-		l.state.CombatLog = append(l.state.CombatLog, fmt.Sprintf("🛡️ %s BLOCKED %s's %s! (%d dmg)", def.Name, att.Name, attackName, reducedDmg))
+		def.Energy += 8
+		l.state.CombatLog = append(l.state.CombatLog, fmt.Sprintf("🛡️ %s DEFLECTED %s's %s! (%d dmg)", def.Name, att.Name, attackName, reducedDmg))
 	} else {
 		def.HP -= dmg
 		def.State = StateHurt
@@ -414,13 +442,13 @@ func (l *Lobby) applyHit(att *Fighter, def *Fighter, dmg int, energyGain int, at
 		att.Combo++
 
 		// Pushback
-		if att.Pos < def.Pos && def.Pos < arenaWidth-10 {
+		if att.Pos < def.Pos && def.Pos < arenaWidth-16 {
 			def.Pos += 3
 		} else if att.Pos > def.Pos && def.Pos > 2 {
 			def.Pos -= 3
 		}
 
-		logMsg := fmt.Sprintf("💥 %s landed %s on %s! (-%d HP)", att.Name, attackName, def.Name, dmg)
+		logMsg := fmt.Sprintf("💥 %s struck %s with %s! (-%d HP)", att.Name, def.Name, attackName, dmg)
 		if att.Combo > 1 {
 			logMsg += fmt.Sprintf(" [COMBO x%d!]", att.Combo)
 		}
@@ -434,7 +462,7 @@ func (l *Lobby) applyHit(att *Fighter, def *Fighter, dmg int, energyGain int, at
 	if def.HP <= 0 {
 		def.HP = 0
 		att.Wins++
-		l.state.AnnounceText = fmt.Sprintf("🏆 K.O.! %s WINS ROUND %d!", att.Name, l.state.Round)
+		l.state.AnnounceText = fmt.Sprintf("🏆 K.O.! %s DEFEATED %s IN ROUND %d!", att.Name, def.Name, l.state.Round)
 		l.resetRound()
 	}
 }
@@ -445,10 +473,10 @@ func (l *Lobby) resolveTimeOut() {
 	}
 	if l.state.P1.HP > l.state.P2.HP {
 		l.state.P1.Wins++
-		l.state.AnnounceText = fmt.Sprintf("⏰ TIME UP! %s wins by decision!", l.state.P1.Name)
+		l.state.AnnounceText = fmt.Sprintf("⏰ TIME UP! %s wins by health advantage!", l.state.P1.Name)
 	} else if l.state.P2.HP > l.state.P1.HP {
 		l.state.P2.Wins++
-		l.state.AnnounceText = fmt.Sprintf("⏰ TIME UP! %s wins by decision!", l.state.P2.Name)
+		l.state.AnnounceText = fmt.Sprintf("⏰ TIME UP! %s wins by health advantage!", l.state.P2.Name)
 	} else {
 		l.state.AnnounceText = "⏰ TIME UP! DRAW GAME!"
 	}
@@ -460,13 +488,13 @@ func (l *Lobby) resetRound() {
 	l.state.RoundTime = 99
 	if l.state.P1 != nil {
 		l.state.P1.HP = 100
-		l.state.P1.Pos = 10
+		l.state.P1.Pos = 6
 		l.state.P1.State = StateIdle
 		l.state.P1.Combo = 0
 	}
 	if l.state.P2 != nil {
 		l.state.P2.HP = 100
-		l.state.P2.Pos = arenaWidth - 18
+		l.state.P2.Pos = arenaWidth - 20
 		l.state.P2.State = StateIdle
 		l.state.P2.Combo = 0
 	}
@@ -524,18 +552,18 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 }
 
 // -----------------------------------------------------------------
-// 5. VIEW (ASCII HEALTH BARS, 2D ARENA, FIGHTERS)
+// 5. VIEW (HIGH-DEF SPRITES, HEALTH BARS, 2D ARENA)
 // -----------------------------------------------------------------
 
 func (m model) View() string {
 	var b strings.Builder
 
-	// Top Title
+	// Logo
 	b.WriteString(logoStyle.Render(logoBanner))
 	b.WriteString("\n")
 
-	// P1 & P2 Stats or Waiting
-	p1Name := "EMPTY"
+	// P1 & P2 Info
+	p1Name := "WAITING..."
 	p1HP := 0
 	p1Energy := 0
 	p1Wins := 0
@@ -546,7 +574,7 @@ func (m model) View() string {
 		p1Wins = m.state.P1.Wins
 	}
 
-	p2Name := "EMPTY"
+	p2Name := "WAITING..."
 	p2HP := 0
 	p2Energy := 0
 	p2Wins := 0
@@ -557,7 +585,7 @@ func (m model) View() string {
 		p2Wins = m.state.P2.Wins
 	}
 
-	// Health bar renderer (20 segments)
+	// 20-segment colored bar
 	renderBar := func(val int, max int, fillChar string, color string) string {
 		segments := (val * 20) / max
 		if segments < 0 {
@@ -578,7 +606,7 @@ func (m model) View() string {
 	p1SuperBar := renderBar(p1Energy, 100, "⚡", "#FFE600")
 	p2SuperBar := renderBar(p2Energy, 100, "⚡", "#FFE600")
 
-	// Match HUD (Top Bar)
+	// Match HUD
 	hudLeft := fmt.Sprintf("%s (W:%d)\nHP [%s] %03d\nSP [%s] %03d",
 		p1Color.Render("P1: "+p1Name), p1Wins, p1Bar, p1HP, p1SuperBar, p1Energy)
 
@@ -592,22 +620,25 @@ func (m model) View() string {
 	hudRight := fmt.Sprintf("%s (W:%d)\nHP [%s] %03d\nSP [%s] %03d",
 		p2Color.Render("P2: "+p2Name), p2Wins, p2Bar, p2HP, p2SuperBar, p2Energy)
 
-	hud := lipgloss.JoinHorizontal(lipgloss.Center, hudLeft, "    ", timerBlock, "    ", hudRight)
+	hud := lipgloss.JoinHorizontal(lipgloss.Center, hudLeft, "      ", timerBlock, "      ", hudRight)
 	b.WriteString(meterBorder.Render(hud))
 	b.WriteString("\n\n")
 
 	// Announcement Banner
 	b.WriteString(alertStyle.Render(fmt.Sprintf("  🔔 %s", m.state.AnnounceText)) + "\n\n")
 
-	// Render the 2D Stage with Fighter Sprites
-	stageLines := [4]string{
+	// 7-line high stage
+	stageLines := [7]string{
+		strings.Repeat(" ", arenaWidth),
+		strings.Repeat(" ", arenaWidth),
+		strings.Repeat(" ", arenaWidth),
 		strings.Repeat(" ", arenaWidth),
 		strings.Repeat(" ", arenaWidth),
 		strings.Repeat(" ", arenaWidth),
 		strings.Repeat("═", arenaWidth), // Floor line
 	}
 
-	// Draw P1 Sprite
+	// Stamp P1
 	if m.state.P1 != nil {
 		sprite := p1Sprites.Idle
 		switch m.state.P1.State {
@@ -622,10 +653,10 @@ func (m model) View() string {
 		case StateSuper:
 			sprite = p1Sprites.Super
 		}
-		stampSprite(&stageLines, sprite, m.state.P1.Pos, p1Color)
+		stampSprite7(&stageLines, sprite, m.state.P1.Pos, p1Color)
 	}
 
-	// Draw P2 Sprite
+	// Stamp P2
 	if m.state.P2 != nil {
 		sprite := p2Sprites.Idle
 		switch m.state.P2.State {
@@ -640,53 +671,56 @@ func (m model) View() string {
 		case StateSuper:
 			sprite = p2Sprites.Super
 		}
-		stampSprite(&stageLines, sprite, m.state.P2.Pos, p2Color)
+		stampSprite7(&stageLines, sprite, m.state.P2.Pos, p2Color)
 	}
 
-	// Arena Stage
-	arenaRendered := strings.Join([]string{stageLines[0], stageLines[1], stageLines[2], stageLines[3]}, "\n")
+	// Render Arena Box
+	arenaContent := strings.Join([]string{
+		stageLines[0], stageLines[1], stageLines[2],
+		stageLines[3], stageLines[4], stageLines[5], stageLines[6],
+	}, "\n")
+
 	b.WriteString(lipgloss.NewStyle().
 		Border(lipgloss.RoundedBorder()).
 		BorderForeground(lipgloss.Color("#BD00FF")).
 		Padding(1, 2).
-		Width(arenaWidth + 8).
-		Render(arenaRendered))
+		Width(arenaWidth + 6).
+		Render(arenaContent))
 	b.WriteString("\n\n")
 
-	// Live Combat Log & Controls
+	// Combat Log & Controls
 	logContent := "📜 COMBAT LOG:\n" + strings.Join(m.state.CombatLog, "\n")
 	controlsContent := "🎮 CONTROLS:\n" +
 		"• Move: [A] Left / [D] Right (or ← / →)\n" +
-		"• Attack: [J] Fast Punch  |  [K] Heavy Kick\n" +
-		"• Defense: [L] Block Guard\n" +
-		"• SUPER: [SPACE] Hyper Cyber Beam (Requires 100 SP)"
+		"• Attack: [J] Cyber Jab  |  [K] Plasma Kick\n" +
+		"• Defense: [L] Energy Barrier (Block)\n" +
+		"• SUPER: [SPACE] Mega Railgun (100 SP)"
 
 	bottomBar := lipgloss.JoinHorizontal(
 		lipgloss.Top,
-		lipgloss.NewStyle().Width(42).Render(logContent),
+		lipgloss.NewStyle().Width(45).Render(logContent),
 		"  │  ",
 		lipgloss.NewStyle().Width(42).Render(controlsContent),
 	)
 	b.WriteString(bottomBar + "\n\n")
 
-	// Role Indicator
+	// Current Role
 	role := spectatorBadge.Render("👁️ You are currently Spectating.")
 	if m.state.P1 != nil && m.state.P1.ID == m.myID {
-		role = p1Color.Render("⚔️ You are PLAYER 1 (Cyan)")
+		role = p1Color.Render("⚔️ You are PLAYER 1 [Cyber-Ninja]")
 	} else if m.state.P2 != nil && m.state.P2.ID == m.myID {
-		role = p2Color.Render("⚔️ You are PLAYER 2 (Magenta)")
+		role = p2Color.Render("⚔️ You are PLAYER 2 [War-Mech]")
 	}
 	b.WriteString(fmt.Sprintf("%s   [Press 'Q' to quit]\n", role))
 
 	return b.String()
 }
 
-func stampSprite(stage *[4]string, sprite []string, pos int, style lipgloss.Style) {
-	for row := 0; row < 3; row++ {
+func stampSprite7(stage *[7]string, sprite []string, pos int, style lipgloss.Style) {
+	for row := 0; row < 6; row++ {
 		line := []rune(stage[row])
 		spriteRunes := []rune(style.Render(sprite[row]))
 
-		// Replace runes at pos
 		start := pos
 		if start < 0 {
 			start = 0
@@ -713,7 +747,7 @@ func sshHandler(s ssh.Session) {
 
 	name := s.User()
 	if strings.TrimSpace(name) == "" {
-		name = fmt.Sprintf("Fighter%d", rand.Intn(999))
+		name = fmt.Sprintf("Cyborg%d", rand.Intn(999))
 	}
 
 	playerID, lobbyCh := globalLobby.Join(name)
@@ -756,7 +790,7 @@ func main() {
 	signal.Notify(stop, os.Interrupt, syscall.SIGTERM)
 
 	go func() {
-		log.Printf("🥊 TERMINATOR: COMBAT ARENA live on port %s...", port)
+		log.Printf("🥊 MECHA COMBAT ARENA live on port %s...", port)
 		log.Printf("👉 Connect: ssh -p %s <your_name>@localhost", port)
 		if err := server.ListenAndServe(); err != nil && err != ssh.ErrServerClosed {
 			log.Fatalf("Server error: %v", err)
