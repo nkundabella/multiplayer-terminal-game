@@ -17,238 +17,272 @@ import (
 )
 
 const port = "2222"
+const arenaWidth = 60
 
-// ---------------------------------------------------------
-// 1. GAME DATA & QUESTIONS
-// ---------------------------------------------------------
+// -----------------------------------------------------------------
+// 1. ASCII SPRITES & ANIMATION FRAMES
+// -----------------------------------------------------------------
 
-type Question struct {
-	Category string
-	Prompt   string
-	Options  [4]string
-	Answer   int // 0-indexed (0=A, 1=B, 2=C, 3=D)
-	Points   int
+type FighterSprite struct {
+	Idle  []string
+	Punch []string
+	Kick  []string
+	Block []string
+	Hurt  []string
+	Super []string
 }
 
-var questionPool = []Question{
-	{
-		Category: "⚡ CYBER SEC",
-		Prompt:   "What does SSH stand for?",
-		Options:  [4]string{"Secure Shell", "System Super Host", "Simple Server Hub", "Safe Socket Handler"},
-		Answer:   0,
-		Points:   100,
+// Player 1 (Facing Right)
+var p1Sprites = FighterSprite{
+	Idle: []string{
+		"   O    ",
+		"  /|\\   ",
+		"  / \\   ",
 	},
-	{
-		Category: "💻 SYSTEM KERNEL",
-		Prompt:   "Which command kills a process by PID with SIGKILL in Linux/Unix?",
-		Options:  [4]string{"kill -1", "kill -9", "kill -stop", "terminate /now"},
-		Answer:   1,
-		Points:   100,
+	Punch: []string{
+		"   O==👊 ",
+		"  /|    ",
+		"  / \\   ",
 	},
-	{
-		Category: "🎮 GAMING / TECH",
-		Prompt:   "In The Matrix, what color pill lets Neo see the truth?",
-		Options:  [4]string{"Blue Pill", "Green Pill", "Red Pill", "Gold Pill"},
-		Answer:   2,
-		Points:   150,
+	Kick: []string{
+		"   O_   ",
+		"  /| \\_🦵",
+		"  /     ",
 	},
-	{
-		Category: "👾 GOLANG LORE",
-		Prompt:   "What is the name of Go's official blue mascot?",
-		Options:  [4]string{"Ferris", "Gopher", "Tux", "Duke"},
-		Answer:   1,
-		Points:   100,
+	Block: []string{
+		"   O|   ",
+		"  🛡️|   ",
+		"  / \\   ",
 	},
-	{
-		Category: "🌐 NETWORKING",
-		Prompt:   "What default port is standard for SSH connections?",
-		Options:  [4]string{"80", "443", "8080", "22"},
-		Answer:   3,
-		Points:   100,
+	Hurt: []string{
+		"   X💥  ",
+		"  (>\\   ",
+		"  / \\   ",
 	},
-	{
-		Category: "🚀 SPACE / SCI-FI",
-		Prompt:   "In 2001: A Space Odyssey, what is the rogue AI computer named?",
-		Options:  [4]string{"GLADOS", "HAL 9000", "SKYNET", "JARVIS"},
-		Answer:   1,
-		Points:   150,
-	},
-	{
-		Category: "⚡ HARDWARE",
-		Prompt:   "What does GPU stand for?",
-		Options:  [4]string{"General Processing Utility", "Graphics Processing Unit", "Gaming Power Upgrade", "Gigabit Port Unit"},
-		Answer:   1,
-		Points:   100,
-	},
-	{
-		Category: "🔥 TERMINAL LORE",
-		Prompt:   "Which editor famously traps beginners who can't figure out :wq?",
-		Options:  [4]string{"Nano", "Emacs", "Vim", "VSCode"},
-		Answer:   2,
-		Points:   100,
+	Super: []string{
+		"  ⚡O/  ⚡",
+		"  🔥|==💥💥",
+		"  / \\   ",
 	},
 }
 
-// ---------------------------------------------------------
-// 2. RETRO ARCADE BANNER & STYLES
-// ---------------------------------------------------------
+// Player 2 (Facing Left)
+var p2Sprites = FighterSprite{
+	Idle: []string{
+		"    O   ",
+		"   /|\\  ",
+		"   / \\  ",
+	},
+	Punch: []string{
+		" 👊==O   ",
+		"    |\\  ",
+		"   / \\  ",
+	},
+	Kick: []string{
+		"   _O   ",
+		"🦵_/ |\\  ",
+		"     \\  ",
+	},
+	Block: []string{
+		"   |O   ",
+		"   |🛡️  ",
+		"   / \\  ",
+	},
+	Hurt: []string{
+		"  💥X   ",
+		"   /<)  ",
+		"   / \\  ",
+	},
+	Super: []string{
+		"  ⚡\\O⚡ ",
+		"💥💥==|🔥 ",
+		"   / \\  ",
+	},
+}
 
-const arcadeBanner = `
- █▀▀ █░█ █▄▄ █▀▀ █▀█   █▀▀ █░█ █▀█ █▀▀ █░█
- █▄▄ ▀▄▀ █▄█ ██▄ █▀▄   █▄▄ █▄█ █▀▄ ▄▄█ █▀█
+const logoBanner = `
+████████ ███████ ██████  ███    ███ ██ ███    ██  █████  ████████  ██████  ██████  
+   ██    ██      ██   ██ ████  ████ ██ ████   ██ ██   ██    ██    ██    ██ ██   ██ 
+   ██    █████   ██████  ██ ████ ██ ██ ██ ██  ██ ███████    ██    ██    ██ ██████  
+   ██    ██      ██   ██ ██  ██  ██ ██ ██  ██ ██ ██   ██    ██    ██    ██ ██   ██ 
+   ██    ███████ ██   ██ ██      ██ ██ ██   ████ ██   ██    ██     ██████  ██   ██ 
+                     ═══ CYBER COMBAT TERMINAL ARENA ═══
 `
 
+// -----------------------------------------------------------------
+// 2. RETRO ARCADE STYLES
+// -----------------------------------------------------------------
+
 var (
-	bannerStyle = lipgloss.NewStyle().
-			Foreground(lipgloss.Color("#FF007F")).
+	logoStyle = lipgloss.NewStyle().
+			Foreground(lipgloss.Color("#FF0055")).
 			Bold(true)
 
-	subBannerStyle = lipgloss.NewStyle().
-			Foreground(lipgloss.Color("#00F0FF")).
-			Bold(true)
+	p1Color = lipgloss.NewStyle().Foreground(lipgloss.Color("#00F0FF")).Bold(true)
+	p2Color = lipgloss.NewStyle().Foreground(lipgloss.Color("#FF007F")).Bold(true)
 
-	cardBox = lipgloss.NewStyle().
-		Border(lipgloss.DoubleBorder()).
-		BorderForeground(lipgloss.Color("#BD00FF")).
-		Padding(1, 2).
-		Width(56)
+	meterBorder = lipgloss.NewStyle().
+			Border(lipgloss.DoubleBorder()).
+			BorderForeground(lipgloss.Color("#BD00FF")).
+			Padding(1, 2)
 
-	sideBox = lipgloss.NewStyle().
-		Border(lipgloss.DoubleBorder()).
-		BorderForeground(lipgloss.Color("#00F0FF")).
-		Padding(1, 2).
-		Width(30)
+	stageStyle = lipgloss.NewStyle().
+			Border(lipgloss.NormalBorder(), false, false, true, false).
+			BorderForeground(lipgloss.Color("#FFE600"))
 
-	timerStyle = lipgloss.NewStyle().
+	alertStyle = lipgloss.NewStyle().
 			Bold(true).
 			Foreground(lipgloss.Color("#FFE600"))
 
-	goldBadge = lipgloss.NewStyle().
-			Bold(true).
-			Foreground(lipgloss.Color("#FFD700"))
-
-	cyanBadge = lipgloss.NewStyle().
-			Bold(true).
-			Foreground(lipgloss.Color("#00F0FF"))
-
-	feedBox = lipgloss.NewStyle().
-		Border(lipgloss.NormalBorder(), false, false, false, true).
-		BorderForeground(lipgloss.Color("#FF007F")).
-		PaddingLeft(1).
-		MarginTop(1)
+	spectatorBadge = lipgloss.NewStyle().
+			Foreground(lipgloss.Color("#A4B0BE")).
+			Italic(true)
 )
 
-// ---------------------------------------------------------
-// 3. MULTIPLAYER BATTLE ROYALE HUB
-// ---------------------------------------------------------
+// -----------------------------------------------------------------
+// 3. COMBAT STATE & MULTIPLAYER LOBBY
+// -----------------------------------------------------------------
 
-type PlayerInfo struct {
+type ActionState int
+
+const (
+	StateIdle ActionState = iota
+	StatePunch
+	StateKick
+	StateBlock
+	StateHurt
+	StateSuper
+)
+
+type Fighter struct {
 	ID        int
 	Name      string
+	HP        int
+	MaxHP     int
+	Energy    int // 0 to 100 for Super
+	Pos       int // Horizontal position (0 to arenaWidth-10)
+	State     ActionState
+	StateTime int // Ticks left in current state
+	Combo     int
 	Score     int
-	Streak    int
-	HasAnswer bool
-	Taunt     string
+	Wins      int
 }
 
-type LobbyState struct {
-	RoundIndex int
-	Question   Question
-	TimeLeft   int
-	RoundActive bool
-	Winner     string
+type CombatState struct {
+	P1           *Fighter
+	P2           *Fighter
+	Spectators   int
+	Round        int
+	RoundTime    int
+	FightStarted bool
+	AnnounceText string
+	CombatLog    []string
 }
 
 type Lobby struct {
-	mu           sync.Mutex
-	players      map[int]*PlayerInfo
-	subscribers  map[int]chan GameUpdateMsg
-	nextPlayerID int
-	currentQ     Question
-	roundNum     int
-	timeLeft     int
-	feed         []string
-	qIndex       int
+	mu          sync.Mutex
+	subscribers map[int]chan CombatState
+	nextID      int
+	state       CombatState
 }
-
-type GameUpdateMsg struct {
-	Players     []PlayerInfo
-	Question    Question
-	RoundNum    int
-	TimeLeft    int
-	Feed        []string
-	AnsweredBy  string
-	Correct     bool
-}
-
-type TickMsg time.Time
 
 var globalLobby = &Lobby{
-	players:      make(map[int]*PlayerInfo),
-	subscribers:  make(map[int]chan GameUpdateMsg),
-	nextPlayerID: 1,
-	timeLeft:     15,
-	roundNum:     1,
-	feed:         []string{"⚡ BATTLE ROYALE INITIATED! First to buzz the right answer wins!"},
+	subscribers: make(map[int]chan CombatState),
+	nextID:      1,
+	state: CombatState{
+		Round:        1,
+		RoundTime:    99,
+		FightStarted: false,
+		AnnounceText: "WAITING FOR CHALLENGER (NEED 2 FIGHTERS)...",
+		CombatLog:    []string{"⚡ Welcome to TERMINATOR: CYBER COMBAT!"},
+	},
 }
 
 func init() {
-	globalLobby.currentQ = questionPool[0]
-	// Game Loop Timer (Ticks every 1 second)
+	// Game Engine 10Hz Tick Loop (every 100ms for punchy fighting mechanics)
 	go func() {
-		for {
-			time.Sleep(1 * time.Second)
-			globalLobby.tick()
+		ticker := time.NewTicker(100 * time.Millisecond)
+		secondTick := 0
+		for range ticker.C {
+			globalLobby.gameTick(&secondTick)
 		}
 	}()
 }
 
-func (l *Lobby) tick() {
+func (l *Lobby) gameTick(secondTick *int) {
 	l.mu.Lock()
 	defer l.mu.Unlock()
 
-	if len(l.players) == 0 {
-		return
-	}
-
-	l.timeLeft--
-	if l.timeLeft <= 0 {
-		// Time expired, move to next question!
-		l.qIndex = (l.qIndex + 1) % len(questionPool)
-		l.currentQ = questionPool[l.qIndex]
-		l.roundNum++
-		l.timeLeft = 15
-
-		// Reset answer status for all players
-		for _, p := range l.players {
-			p.HasAnswer = false
+	*secondTick++
+	if *secondTick%10 == 0 && l.state.FightStarted && l.state.RoundTime > 0 {
+		l.state.RoundTime--
+		if l.state.RoundTime <= 0 {
+			l.resolveTimeOut()
 		}
-		l.feed = append(l.feed, fmt.Sprintf("⏰ TIME EXPIRED! Next Round: %s", l.currentQ.Category))
 	}
 
-	l.broadcastUnlocked("", false)
+	// Update fighter state durations (animations auto-reset to idle)
+	if l.state.P1 != nil {
+		if l.state.P1.StateTime > 0 {
+			l.state.P1.StateTime--
+			if l.state.P1.StateTime == 0 {
+				l.state.P1.State = StateIdle
+			}
+		}
+	}
+
+	if l.state.P2 != nil {
+		if l.state.P2.StateTime > 0 {
+			l.state.P2.StateTime--
+			if l.state.P2.StateTime == 0 {
+				l.state.P2.State = StateIdle
+			}
+		}
+	}
+
+	l.broadcastUnlocked()
 }
 
-func (l *Lobby) Join(name string) (int, chan GameUpdateMsg) {
+func (l *Lobby) Join(name string) (int, chan CombatState) {
 	l.mu.Lock()
 	defer l.mu.Unlock()
 
-	id := l.nextPlayerID
-	l.nextPlayerID++
+	id := l.nextID
+	l.nextID++
 
-	player := &PlayerInfo{
-		ID:     id,
-		Name:   name,
-		Score:  0,
-		Streak: 0,
-	}
-	l.players[id] = player
-
-	ch := make(chan GameUpdateMsg, 16)
+	ch := make(chan CombatState, 8)
 	l.subscribers[id] = ch
 
-	l.feed = append(l.feed, fmt.Sprintf("👾 %s has entered the arena!", name))
-	l.broadcastUnlocked("", false)
+	if l.state.P1 == nil {
+		l.state.P1 = &Fighter{
+			ID:     id,
+			Name:   name,
+			HP:     100,
+			MaxHP:  100,
+			Pos:    10,
+			State:  StateIdle,
+			Energy: 20,
+		}
+		l.state.AnnounceText = fmt.Sprintf("🎮 %s ENTERED AS PLAYER 1! Waiting for P2...", name)
+	} else if l.state.P2 == nil {
+		l.state.P2 = &Fighter{
+			ID:     id,
+			Name:   name,
+			HP:     100,
+			MaxHP:  100,
+			Pos:    arenaWidth - 18,
+			State:  StateIdle,
+			Energy: 20,
+		}
+		l.state.FightStarted = true
+		l.state.RoundTime = 99
+		l.state.AnnounceText = fmt.Sprintf("🔥 ROUND %d: %s VS %s — FIGHT!", l.state.Round, l.state.P1.Name, l.state.P2.Name)
+	} else {
+		l.state.Spectators++
+		l.state.AnnounceText = fmt.Sprintf("👀 %s is now spectating!", name)
+	}
+
+	l.broadcastUnlocked()
 	return id, ch
 }
 
@@ -256,307 +290,441 @@ func (l *Lobby) Leave(id int) {
 	l.mu.Lock()
 	defer l.mu.Unlock()
 
-	if player, exists := l.players[id]; exists {
-		name := player.Name
-		delete(l.players, id)
-		delete(l.subscribers, id)
-		l.feed = append(l.feed, fmt.Sprintf("💀 %s disconnected.", name))
-		l.broadcastUnlocked("", false)
-	}
-}
+	delete(l.subscribers, id)
 
-func (l *Lobby) SubmitAnswer(playerID int, choice int) {
-	l.mu.Lock()
-	defer l.mu.Unlock()
-
-	player, exists := l.players[playerID]
-	if !exists || player.HasAnswer {
-		return
-	}
-
-	player.HasAnswer = true
-
-	if choice == l.currentQ.Answer {
-		// Speed bonus based on timeLeft!
-		bonus := l.timeLeft * 10
-		totalPts := l.currentQ.Points + bonus
-		player.Score += totalPts
-		player.Streak++
-
-		var streakBonus string
-		if player.Streak > 1 {
-			streakBonus = fmt.Sprintf(" (🔥 STREAK x%d!)", player.Streak)
-		}
-
-		event := fmt.Sprintf("💥 %s BUZZED FIRST! +%d pts%s", player.Name, totalPts, streakBonus)
-		l.feed = append(l.feed, event)
-
-		// Next round!
-		l.qIndex = (l.qIndex + 1) % len(questionPool)
-		l.currentQ = questionPool[l.qIndex]
-		l.roundNum++
-		l.timeLeft = 15
-
-		for _, p := range l.players {
-			p.HasAnswer = false
-		}
-		l.broadcastUnlocked(player.Name, true)
+	if l.state.P1 != nil && l.state.P1.ID == id {
+		l.state.AnnounceText = fmt.Sprintf("🚪 %s (P1) forfeited the match!", l.state.P1.Name)
+		l.state.P1 = nil
+		l.state.FightStarted = false
+	} else if l.state.P2 != nil && l.state.P2.ID == id {
+		l.state.AnnounceText = fmt.Sprintf("🚪 %s (P2) forfeited the match!", l.state.P2.Name)
+		l.state.P2 = nil
+		l.state.FightStarted = false
 	} else {
-		player.Streak = 0
-		if player.Score >= 50 {
-			player.Score -= 50
+		if l.state.Spectators > 0 {
+			l.state.Spectators--
 		}
-		event := fmt.Sprintf("❌ %s guessed wrong! (-50 pts)", player.Name)
-		l.feed = append(l.feed, event)
-		l.broadcastUnlocked(player.Name, false)
 	}
+
+	l.broadcastUnlocked()
 }
 
-func (l *Lobby) SendTaunt(playerID int, taunt string) {
+func (l *Lobby) HandleInput(id int, key string) {
 	l.mu.Lock()
 	defer l.mu.Unlock()
 
-	player, exists := l.players[playerID]
-	if !exists {
+	if !l.state.FightStarted || l.state.P1 == nil || l.state.P2 == nil {
 		return
 	}
 
-	player.Taunt = taunt
-	event := fmt.Sprintf("💬 %s: %s", player.Name, taunt)
-	l.feed = append(l.feed, event)
-	l.broadcastUnlocked("", false)
+	isP1 := l.state.P1.ID == id
+	isP2 := l.state.P2.ID == id
+	if !isP1 && !isP2 {
+		return // Spectator
+	}
+
+	attacker := l.state.P1
+	defender := l.state.P2
+	dir := 1
+	if isP2 {
+		attacker = l.state.P2
+		defender = l.state.P1
+		dir = -1
+	}
+
+	// Don't take inputs if currently stunned/hurt
+	if attacker.State == StateHurt {
+		return
+	}
+
+	dist := defender.Pos - attacker.Pos
+	if dist < 0 {
+		dist = -dist
+	}
+
+	switch key {
+	// Movement
+	case "left", "a":
+		if attacker.Pos > 2 {
+			attacker.Pos -= 2
+		}
+	case "right", "d":
+		// Prevent walking right through the other fighter
+		if (dir == 1 && attacker.Pos+8 < defender.Pos) || (dir == -1 && attacker.Pos < arenaWidth-10) {
+			attacker.Pos += 2
+		} else if dir == -1 && attacker.Pos-8 > defender.Pos {
+			attacker.Pos -= 2
+		}
+
+	// Fast Punch (J / 1)
+	case "j", "1":
+		attacker.State = StatePunch
+		attacker.StateTime = 3 // 300ms
+		if dist <= 10 {
+			l.applyHit(attacker, defender, 8, 10, "PUNCH")
+		}
+
+	// Heavy Kick (K / 2)
+	case "k", "2":
+		attacker.State = StateKick
+		attacker.StateTime = 4 // 400ms
+		if dist <= 12 {
+			l.applyHit(attacker, defender, 15, 15, "HEAVY KICK")
+		}
+
+	// Block Guard (L / 3)
+	case "l", "3", "s", "down":
+		attacker.State = StateBlock
+		attacker.StateTime = 4
+
+	// Super Combo Beam (Space / U / 4)
+	case "space", "u", "4":
+		if attacker.Energy >= 100 {
+			attacker.State = StateSuper
+			attacker.StateTime = 7
+			attacker.Energy = 0
+			if dist <= 24 {
+				l.applyHit(attacker, defender, 35, 0, "💥 HYPER CYBER BEAM")
+			}
+			l.state.AnnounceText = fmt.Sprintf("⚡ %s FIRED A HYPER CYBER BEAM!", attacker.Name)
+		} else {
+			l.state.AnnounceText = fmt.Sprintf("⚠️ %s: Energy not ready (%d/100)!", attacker.Name, attacker.Energy)
+		}
+	}
+
+	l.broadcastUnlocked()
 }
 
-func (l *Lobby) broadcastUnlocked(answeredBy string, correct bool) {
-	if len(l.feed) > 5 {
-		l.feed = l.feed[len(l.feed)-5:]
+func (l *Lobby) applyHit(att *Fighter, def *Fighter, dmg int, energyGain int, attackName string) {
+	att.Energy += energyGain
+	if att.Energy > 100 {
+		att.Energy = 100
 	}
 
-	playerList := make([]PlayerInfo, 0, len(l.players))
-	for _, p := range l.players {
-		playerList = append(playerList, *p)
+	if def.State == StateBlock {
+		reducedDmg := dmg / 4
+		def.HP -= reducedDmg
+		att.Combo = 0
+		def.Energy += 5
+		l.state.CombatLog = append(l.state.CombatLog, fmt.Sprintf("🛡️ %s BLOCKED %s's %s! (%d dmg)", def.Name, att.Name, attackName, reducedDmg))
+	} else {
+		def.HP -= dmg
+		def.State = StateHurt
+		def.StateTime = 4
+		att.Combo++
+
+		// Pushback
+		if att.Pos < def.Pos && def.Pos < arenaWidth-10 {
+			def.Pos += 3
+		} else if att.Pos > def.Pos && def.Pos > 2 {
+			def.Pos -= 3
+		}
+
+		logMsg := fmt.Sprintf("💥 %s landed %s on %s! (-%d HP)", att.Name, attackName, def.Name, dmg)
+		if att.Combo > 1 {
+			logMsg += fmt.Sprintf(" [COMBO x%d!]", att.Combo)
+		}
+		l.state.CombatLog = append(l.state.CombatLog, logMsg)
 	}
 
-	msg := GameUpdateMsg{
-		Players:    playerList,
-		Question:   l.currentQ,
-		RoundNum:   l.roundNum,
-		TimeLeft:   l.timeLeft,
-		Feed:       append([]string{}, l.feed...),
-		AnsweredBy: answeredBy,
-		Correct:    correct,
+	if len(l.state.CombatLog) > 4 {
+		l.state.CombatLog = l.state.CombatLog[len(l.state.CombatLog)-4:]
 	}
 
+	if def.HP <= 0 {
+		def.HP = 0
+		att.Wins++
+		l.state.AnnounceText = fmt.Sprintf("🏆 K.O.! %s WINS ROUND %d!", att.Name, l.state.Round)
+		l.resetRound()
+	}
+}
+
+func (l *Lobby) resolveTimeOut() {
+	if l.state.P1 == nil || l.state.P2 == nil {
+		return
+	}
+	if l.state.P1.HP > l.state.P2.HP {
+		l.state.P1.Wins++
+		l.state.AnnounceText = fmt.Sprintf("⏰ TIME UP! %s wins by decision!", l.state.P1.Name)
+	} else if l.state.P2.HP > l.state.P1.HP {
+		l.state.P2.Wins++
+		l.state.AnnounceText = fmt.Sprintf("⏰ TIME UP! %s wins by decision!", l.state.P2.Name)
+	} else {
+		l.state.AnnounceText = "⏰ TIME UP! DRAW GAME!"
+	}
+	l.resetRound()
+}
+
+func (l *Lobby) resetRound() {
+	l.state.Round++
+	l.state.RoundTime = 99
+	if l.state.P1 != nil {
+		l.state.P1.HP = 100
+		l.state.P1.Pos = 10
+		l.state.P1.State = StateIdle
+		l.state.P1.Combo = 0
+	}
+	if l.state.P2 != nil {
+		l.state.P2.HP = 100
+		l.state.P2.Pos = arenaWidth - 18
+		l.state.P2.State = StateIdle
+		l.state.P2.Combo = 0
+	}
+}
+
+func (l *Lobby) broadcastUnlocked() {
 	for _, ch := range l.subscribers {
 		select {
-		case ch <- msg:
+		case ch <- l.state:
 		default:
 		}
 	}
 }
 
-// ---------------------------------------------------------
-// 4. BUBBLE TEA CLIENT UI
-// ---------------------------------------------------------
+// -----------------------------------------------------------------
+// 4. BUBBLE TEA CLIENT & GRAPHICAL ENGINE
+// -----------------------------------------------------------------
 
 type model struct {
-	playerID   int
-	playerName string
-	lobbyCh    chan GameUpdateMsg
-	players    []PlayerInfo
-	question   Question
-	roundNum   int
-	timeLeft   int
-	feed       []string
-	cursor     int
-	myPlayer   PlayerInfo
-	feedback   string
+	myID      int
+	myName    string
+	lobbyCh   chan CombatState
+	state     CombatState
+	termWidth int
 }
 
-func waitForGameUpdate(ch chan GameUpdateMsg) tea.Cmd {
+func waitForCombatUpdate(ch chan CombatState) tea.Cmd {
 	return func() tea.Msg {
 		return <-ch
 	}
 }
 
 func (m model) Init() tea.Cmd {
-	return waitForGameUpdate(m.lobbyCh)
+	return waitForCombatUpdate(m.lobbyCh)
 }
 
 func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
+	case CombatState:
+		m.state = msg
+		return m, waitForCombatUpdate(m.lobbyCh)
 
-	case GameUpdateMsg:
-		m.players = msg.Players
-		m.question = msg.Question
-		m.roundNum = msg.RoundNum
-		m.timeLeft = msg.TimeLeft
-		m.feed = msg.Feed
-
-		// Find own updated stats
-		for _, p := range m.players {
-			if p.ID == m.playerID {
-				m.myPlayer = p
-				break
-			}
-		}
-
-		if msg.AnsweredBy != "" {
-			if msg.Correct {
-				m.feedback = fmt.Sprintf("🎯 %s got it right!", msg.AnsweredBy)
-			} else {
-				m.feedback = fmt.Sprintf("❌ %s was wrong!", msg.AnsweredBy)
-			}
-		}
-		return m, waitForGameUpdate(m.lobbyCh)
+	case tea.WindowSizeMsg:
+		m.termWidth = msg.Width
 
 	case tea.KeyMsg:
 		switch msg.String() {
 		case "ctrl+c", "esc", "q":
 			return m, tea.Quit
-
-		// Option shortcuts (1,2,3,4 or A,B,C,D)
-		case "1", "a", "A":
-			globalLobby.SubmitAnswer(m.playerID, 0)
-		case "2", "b", "B":
-			globalLobby.SubmitAnswer(m.playerID, 1)
-		case "3", "c", "C":
-			globalLobby.SubmitAnswer(m.playerID, 2)
-		case "4", "d", "D":
-			globalLobby.SubmitAnswer(m.playerID, 3)
-
-		// Arrow navigation
-		case "up", "k":
-			if m.cursor > 0 {
-				m.cursor--
-			}
-		case "down", "j":
-			if m.cursor < 3 {
-				m.cursor++
-			}
-		case "enter", "space":
-			globalLobby.SubmitAnswer(m.playerID, m.cursor)
-
-		// Taunt / Emote shortcuts!
-		case "t":
-			taunts := []string{"Too slow! 😎", "GG! 🚀", "Catch me if you can! ⚡", "Matrix level! 🕶️"}
-			globalLobby.SendTaunt(m.playerID, taunts[rand.Intn(len(taunts))])
+		default:
+			globalLobby.HandleInput(m.myID, msg.String())
 		}
 	}
 	return m, nil
 }
 
-// ---------------------------------------------------------
-// 5. VIEW (RETRO GAMING TUI)
-// ---------------------------------------------------------
+// -----------------------------------------------------------------
+// 5. VIEW (ASCII HEALTH BARS, 2D ARENA, FIGHTERS)
+// -----------------------------------------------------------------
 
 func (m model) View() string {
-	// Top Banner
-	banner := bannerStyle.Render(arcadeBanner)
-	sub := subBannerStyle.Render("       ═══ MULTIPLAYER CYBER TRIVIA RUSH ═══")
+	var b strings.Builder
 
-	// Timer Bar (Dynamic Visual Meter)
-	var timerMeter strings.Builder
-	timerMeter.WriteString("⏳ TIME: [")
-	for i := 0; i < 15; i++ {
-		if i < m.timeLeft {
-			timerMeter.WriteString("█")
-		} else {
-			timerMeter.WriteString("░")
-		}
-	}
-	timerMeter.WriteString(fmt.Sprintf("] %02ds", m.timeLeft))
+	// Top Title
+	b.WriteString(logoStyle.Render(logoBanner))
+	b.WriteString("\n")
 
-	timerRendered := timerStyle.Render(timerMeter.String())
-	roundBadge := lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("#FF007F")).Render(fmt.Sprintf("ROUND #%d", m.roundNum))
-	statusBar := fmt.Sprintf("%s    %s    %s", roundBadge, timerRendered, cyanBadge.Render(m.question.Category))
-
-	// Options rendering
-	optionLetters := []string{"[A]", "[B]", "[C]", "[D]"}
-	var optionsView strings.Builder
-	for i, opt := range m.question.Options {
-		prefix := "  "
-		style := lipgloss.NewStyle().Foreground(lipgloss.Color("#D1D8E0"))
-
-		if i == m.cursor {
-			prefix = "👉 "
-			style = lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("#00F0FF")).Background(lipgloss.Color("#2D1B69"))
-		}
-
-		optionsView.WriteString(style.Render(fmt.Sprintf("%s%s %s", prefix, optionLetters[i], opt)) + "\n")
+	// P1 & P2 Stats or Waiting
+	p1Name := "EMPTY"
+	p1HP := 0
+	p1Energy := 0
+	p1Wins := 0
+	if m.state.P1 != nil {
+		p1Name = m.state.P1.Name
+		p1HP = m.state.P1.HP
+		p1Energy = m.state.P1.Energy
+		p1Wins = m.state.P1.Wins
 	}
 
-	// Question Card
-	questionBody := fmt.Sprintf(
-		"%s\n\n"+
-			"❓ %s\n\n"+
-			"%s\n"+
-			"⚡ Base Value: %d pts (+ Speed Bonus)\n\n"+
-			"📜 Live Battle Feed:\n%s",
-		statusBar,
-		lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("#FFFFFF")).Render(m.question.Prompt),
-		optionsView.String(),
-		m.question.Points,
-		feedBox.Render(strings.Join(m.feed, "\n")),
+	p2Name := "EMPTY"
+	p2HP := 0
+	p2Energy := 0
+	p2Wins := 0
+	if m.state.P2 != nil {
+		p2Name = m.state.P2.Name
+		p2HP = m.state.P2.HP
+		p2Energy = m.state.P2.Energy
+		p2Wins = m.state.P2.Wins
+	}
+
+	// Health bar renderer (20 segments)
+	renderBar := func(val int, max int, fillChar string, color string) string {
+		segments := (val * 20) / max
+		if segments < 0 {
+			segments = 0
+		}
+		if segments > 20 {
+			segments = 20
+		}
+		filled := strings.Repeat(fillChar, segments)
+		empty := strings.Repeat("░", 20-segments)
+		return lipgloss.NewStyle().Foreground(lipgloss.Color(color)).Bold(true).Render(filled) +
+			lipgloss.NewStyle().Foreground(lipgloss.Color("#444444")).Render(empty)
+	}
+
+	p1Bar := renderBar(p1HP, 100, "█", "#00F0FF")
+	p2Bar := renderBar(p2HP, 100, "█", "#FF007F")
+
+	p1SuperBar := renderBar(p1Energy, 100, "⚡", "#FFE600")
+	p2SuperBar := renderBar(p2Energy, 100, "⚡", "#FFE600")
+
+	// Match HUD (Top Bar)
+	hudLeft := fmt.Sprintf("%s (W:%d)\nHP [%s] %03d\nSP [%s] %03d",
+		p1Color.Render("P1: "+p1Name), p1Wins, p1Bar, p1HP, p1SuperBar, p1Energy)
+
+	timerBlock := lipgloss.NewStyle().
+		Bold(true).
+		Foreground(lipgloss.Color("#FFE600")).
+		Background(lipgloss.Color("#2D1B69")).
+		Padding(0, 2).
+		Render(fmt.Sprintf("⏱️ %02d\nROUND %d", m.state.RoundTime, m.state.Round))
+
+	hudRight := fmt.Sprintf("%s (W:%d)\nHP [%s] %03d\nSP [%s] %03d",
+		p2Color.Render("P2: "+p2Name), p2Wins, p2Bar, p2HP, p2SuperBar, p2Energy)
+
+	hud := lipgloss.JoinHorizontal(lipgloss.Center, hudLeft, "    ", timerBlock, "    ", hudRight)
+	b.WriteString(meterBorder.Render(hud))
+	b.WriteString("\n\n")
+
+	// Announcement Banner
+	b.WriteString(alertStyle.Render(fmt.Sprintf("  🔔 %s", m.state.AnnounceText)) + "\n\n")
+
+	// Render the 2D Stage with Fighter Sprites
+	stageLines := [4]string{
+		strings.Repeat(" ", arenaWidth),
+		strings.Repeat(" ", arenaWidth),
+		strings.Repeat(" ", arenaWidth),
+		strings.Repeat("═", arenaWidth), // Floor line
+	}
+
+	// Draw P1 Sprite
+	if m.state.P1 != nil {
+		sprite := p1Sprites.Idle
+		switch m.state.P1.State {
+		case StatePunch:
+			sprite = p1Sprites.Punch
+		case StateKick:
+			sprite = p1Sprites.Kick
+		case StateBlock:
+			sprite = p1Sprites.Block
+		case StateHurt:
+			sprite = p1Sprites.Hurt
+		case StateSuper:
+			sprite = p1Sprites.Super
+		}
+		stampSprite(&stageLines, sprite, m.state.P1.Pos, p1Color)
+	}
+
+	// Draw P2 Sprite
+	if m.state.P2 != nil {
+		sprite := p2Sprites.Idle
+		switch m.state.P2.State {
+		case StatePunch:
+			sprite = p2Sprites.Punch
+		case StateKick:
+			sprite = p2Sprites.Kick
+		case StateBlock:
+			sprite = p2Sprites.Block
+		case StateHurt:
+			sprite = p2Sprites.Hurt
+		case StateSuper:
+			sprite = p2Sprites.Super
+		}
+		stampSprite(&stageLines, sprite, m.state.P2.Pos, p2Color)
+	}
+
+	// Arena Stage
+	arenaRendered := strings.Join([]string{stageLines[0], stageLines[1], stageLines[2], stageLines[3]}, "\n")
+	b.WriteString(lipgloss.NewStyle().
+		Border(lipgloss.RoundedBorder()).
+		BorderForeground(lipgloss.Color("#BD00FF")).
+		Padding(1, 2).
+		Width(arenaWidth + 8).
+		Render(arenaRendered))
+	b.WriteString("\n\n")
+
+	// Live Combat Log & Controls
+	logContent := "📜 COMBAT LOG:\n" + strings.Join(m.state.CombatLog, "\n")
+	controlsContent := "🎮 CONTROLS:\n" +
+		"• Move: [A] Left / [D] Right (or ← / →)\n" +
+		"• Attack: [J] Fast Punch  |  [K] Heavy Kick\n" +
+		"• Defense: [L] Block Guard\n" +
+		"• SUPER: [SPACE] Hyper Cyber Beam (Requires 100 SP)"
+
+	bottomBar := lipgloss.JoinHorizontal(
+		lipgloss.Top,
+		lipgloss.NewStyle().Width(42).Render(logContent),
+		"  │  ",
+		lipgloss.NewStyle().Width(42).Render(controlsContent),
 	)
-	card := cardBox.Render(questionBody)
+	b.WriteString(bottomBar + "\n\n")
 
-	// Leaderboard & Active Players Sidepanel
-	var side strings.Builder
-	side.WriteString(goldBadge.Render("🏆 ARENA LEADERBOARD") + "\n\n")
-
-	for rank, p := range m.players {
-		badge := "  "
-		if p.ID == m.playerID {
-			badge = "⭐"
-		}
-		streakStr := ""
-		if p.Streak > 1 {
-			streakStr = fmt.Sprintf(" 🔥x%d", p.Streak)
-		}
-		side.WriteString(fmt.Sprintf("%s %d. %-10s %s pts%s\n", badge, rank+1, p.Name, goldBadge.Render(fmt.Sprintf("%d", p.Score)), streakStr))
-		if p.Taunt != "" {
-			side.WriteString(fmt.Sprintf("    💭 %s\n", lipgloss.NewStyle().Italic(true).Foreground(lipgloss.Color("#888888")).Render(p.Taunt)))
-		}
+	// Role Indicator
+	role := spectatorBadge.Render("👁️ You are currently Spectating.")
+	if m.state.P1 != nil && m.state.P1.ID == m.myID {
+		role = p1Color.Render("⚔️ You are PLAYER 1 (Cyan)")
+	} else if m.state.P2 != nil && m.state.P2.ID == m.myID {
+		role = p2Color.Render("⚔️ You are PLAYER 2 (Magenta)")
 	}
+	b.WriteString(fmt.Sprintf("%s   [Press 'Q' to quit]\n", role))
 
-	side.WriteString("\n" + lipgloss.NewStyle().Foreground(lipgloss.Color("#A4B0BE")).Render("Controls:\n• [1-4] or [A-D] Quick Buzz\n• [↑/↓] + Enter Select\n• [T] Taunt / Emote\n• [Q] Exit"))
-	sidePanel := sideBox.Render(side.String())
-
-	// Horizontal layout
-	board := lipgloss.JoinHorizontal(lipgloss.Top, card, "  ", sidePanel)
-
-	return fmt.Sprintf("%s\n%s\n\n%s\n", banner, sub, board)
+	return b.String()
 }
 
-// ---------------------------------------------------------
-// 6. SSH SERVER LAUNCHER
-// ---------------------------------------------------------
+func stampSprite(stage *[4]string, sprite []string, pos int, style lipgloss.Style) {
+	for row := 0; row < 3; row++ {
+		line := []rune(stage[row])
+		spriteRunes := []rune(style.Render(sprite[row]))
+
+		// Replace runes at pos
+		start := pos
+		if start < 0 {
+			start = 0
+		}
+		for i, r := range spriteRunes {
+			if start+i < len(line) {
+				line[start+i] = r
+			}
+		}
+		stage[row] = string(line)
+	}
+}
+
+// -----------------------------------------------------------------
+// 6. SSH SERVER BOOTSTRAP
+// -----------------------------------------------------------------
 
 func sshHandler(s ssh.Session) {
 	_, winCh, isPty := s.Pty()
 	if !isPty {
-		fmt.Fprintln(s, "Terminal (PTY) required.")
+		fmt.Fprintln(s, "Terminal (PTY) required to play.")
 		return
 	}
 
 	name := s.User()
 	if strings.TrimSpace(name) == "" {
-		name = fmt.Sprintf("Hacker%d", rand.Intn(999))
+		name = fmt.Sprintf("Fighter%d", rand.Intn(999))
 	}
 
 	playerID, lobbyCh := globalLobby.Join(name)
 	defer globalLobby.Leave(playerID)
 
 	m := model{
-		playerID:   playerID,
-		playerName: name,
-		lobbyCh:    lobbyCh,
-		players:    make([]PlayerInfo, 0),
-		feed:       append([]string{}, globalLobby.feed...),
-		roundNum:   globalLobby.roundNum,
-		question:   globalLobby.currentQ,
-		timeLeft:   globalLobby.timeLeft,
+		myID:      playerID,
+		myName:    name,
+		lobbyCh:   lobbyCh,
+		state:     globalLobby.state,
+		termWidth: 80,
 	}
 
 	p := tea.NewProgram(
@@ -588,7 +756,7 @@ func main() {
 	signal.Notify(stop, os.Interrupt, syscall.SIGTERM)
 
 	go func() {
-		log.Printf("🕹️ Cyber Rush SSH Server live on port %s...", port)
+		log.Printf("🥊 TERMINATOR: COMBAT ARENA live on port %s...", port)
 		log.Printf("👉 Connect: ssh -p %s <your_name>@localhost", port)
 		if err := server.ListenAndServe(); err != nil && err != ssh.ErrServerClosed {
 			log.Fatalf("Server error: %v", err)
@@ -596,5 +764,5 @@ func main() {
 	}()
 
 	<-stop
-	log.Println("Shutting down Cyber Rush server...")
+	log.Println("Shutting down Combat Arena...")
 }
